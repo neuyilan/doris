@@ -46,6 +46,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,9 @@ import javax.annotation.Nullable;
  * Representation for memo in cascades optimizer.
  */
 public class Memo {
+
+    private static final Logger LOGGER = Logger.getLogger(Memo.class);
+
     // generate group id in memo is better for test, since we can reproduce exactly same Memo.
     private static final EventProducer GROUP_MERGE_TRACER = new EventProducer(GroupMergeEvent.class,
             EventChannel.getDefaultChannel().addConsumers(new LogConsumer(GroupMergeEvent.class, EventChannel.LOG)));
@@ -436,11 +440,15 @@ public class Memo {
      * @return merged group
      */
     public Group mergeGroup(Group source, Group destination) {
+        LOGGER.info("memo try to merge group, source group is " + source.getGroupId()
+                + ", dest group is " + destination.getGroupId());
         if (source.equals(destination)) {
             return source;
         }
         List<GroupExpression> needReplaceChild = Lists.newArrayList();
         for (GroupExpression groupExpression : groupExpressions.values()) {
+            LOGGER.info("memo check GroupExpression " + groupExpression + " whether need to be merged."
+                    + " source group is " + source.getGroupId() + ", dest group is " + destination.getGroupId());
             if (groupExpression.children().contains(source)) {
                 if (groupExpression.getOwnerGroup().equals(destination)) {
                     // cycle, we should not merge
